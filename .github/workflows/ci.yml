@@ -48,12 +48,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Etiquetar imagen
+      - name: Autenticarse en Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Etiquetar imagen 
         run: |
           docker tag dds-devops-demo:test \
             ${{ steps.image.outputs.name }}:${GITHUB_SHA::7}
+      
+      - name: Etiquetar imagen para Docker Hub
+        run: |
+          docker tag dds-devops-demo:test \
+            ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
 
       - name: Publicar imagen en GHCR
         run: |
           docker push \
             ${{ steps.image.outputs.name }}:${GITHUB_SHA::7}
+
+      - name: Publicar imagen en Docker Hub
+        run: |
+          docker push \
+            ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
