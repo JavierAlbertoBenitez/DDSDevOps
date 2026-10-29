@@ -31,17 +31,14 @@ jobs:
           docker run -d --name web-test \
             -p 127.0.0.1:8080:80 \
             dds-devops-demo:test
-          
           for i in $(seq 1 15); do
-            # El -i hace que ignore mayúsculas/minúsculas
             if curl -fsS http://127.0.0.1:8080/ | grep -iq "hola devops"; then
-              echo "
+              echo "Prueba exitosa"
               exit 0
             fi
             sleep 1
           done
-          
-          echo "
+          echo "Error: No se encontro el texto. HTML devuelto:"
           curl -s http://127.0.0.1:8080/ || echo "No se pudo conectar"
           docker logs web-test
           exit 1
@@ -67,11 +64,8 @@ jobs:
       
       - name: Etiquetar imagen para Docker Hub (SHA y latest)
         run: |
-          # Etiqueta con el hash del commit
           docker tag dds-devops-demo:test \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
-          
-          # Etiqueta latest (¡ESTO ES LO NUEVO!)
           docker tag dds-devops-demo:test \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:latest
 
@@ -82,11 +76,8 @@ jobs:
 
       - name: Publicar imagen en Docker Hub
         run: |
-          # Sube la del hash
           docker push \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
-          
-          # Sube la de latest (¡ESTO ES LO NUEVO!)
           docker push \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:latest
 
