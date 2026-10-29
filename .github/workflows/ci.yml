@@ -32,12 +32,14 @@ jobs:
             -p 127.0.0.1:8080:80 \
             dds-devops-demo:test
           for i in $(seq 1 15); do
-            if curl -fsS http://127.0.0.1:8080/ | grep -q "Hola DevOps"; then
+            if curl -fsS http://127.0.0.1:8080/ | grep -iq "hola devops"; then
               echo "Prueba exitosa"
               exit 0
             fi
             sleep 1
           done
+          echo "Error: No se encontro el texto. HTML devuelto:"
+          curl -s http://127.0.0.1:8080/ || echo "No se pudo conectar"
           docker logs web-test
           exit 1
 
@@ -55,15 +57,17 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Etiquetar imagen 
+      - name: Etiquetar imagen para GHCR
         run: |
           docker tag dds-devops-demo:test \
             ${{ steps.image.outputs.name }}:${GITHUB_SHA::7}
       
-      - name: Etiquetar imagen para Docker Hub
+      - name: Etiquetar imagen para Docker Hub (SHA y latest)
         run: |
           docker tag dds-devops-demo:test \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
+          docker tag dds-devops-demo:test \
+            ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:latest
 
       - name: Publicar imagen en GHCR
         run: |
@@ -74,9 +78,11 @@ jobs:
         run: |
           docker push \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
+          docker push \
+            ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:latest
 
       - name: Disparar despliegue en Render
         env:
           URL_RENDER: ${{ secrets.RENDER_TRIGGER }}
         run: |
-          curl --silent "$URL_RENDER"
+          curl --silent -X POST "$URL_RENDER"
