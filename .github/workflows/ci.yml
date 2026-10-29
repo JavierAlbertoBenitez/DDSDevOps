@@ -74,3 +74,9 @@ jobs:
         run: |
           docker push \
             ${{ vars.DOCKERHUB_USERNAME }}/dds-devops-demo:${GITHUB_SHA::7}
+
+      - name: Disparar despliegue en Render
+        env:
+          URL_RENDER: ${{ secrets.RENDER_TRIGGER }}
+        run: |
+          curl --silent "$URL_RENDER"
